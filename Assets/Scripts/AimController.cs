@@ -68,11 +68,11 @@ public class AimController : MonoBehaviour
         {
             target = results.point;
             CalculateBullet();
+            RotateBarell();
 
             Aimed = true;
             RefreshTrail(true);
-            RefreshCursor(true);
-            RotateBarell();
+            RefreshCursor(true);            
         }
         else
         {
@@ -136,41 +136,50 @@ public class AimController : MonoBehaviour
     void RotateBarell()
     {
         //границы наклона ствола орудия
-        const float gr_left = -20, gr_right = 20;
+        const float gr_left = -20, gr_right = 20, gr_up = 10, gr_down = 90; //0 градусов это 90, 80 градусов это 10 (из условий задачи)
 
         //rotation: x>0 - vpered; x<0 nazad; y<0 vlevo; y>0 vpravo;
         Vector3 t;
         //Vector3 s;
 
-        //влево-вправо
+        //1.влево-вправо
         t = new Vector3(target.x, 0, target.z);
         //s = new Vector3(spawnpos.x, 0, spawnpos.z);
         //float AngleHorz = Vector3.SignedAngle(Vector3.forward, t - s, Vector3.up); //угол в пространстве, относительно направления "на 12 часов" до указателя мыши
         float AnglePlat = Vector3.SignedAngle(Platform.tr.forward, t - Platform.tr.position, Vector3.up); //угол между направлением платформы и указателем мыши
-        //Debug.Log(AnglePlat);
-        //Debug.Log(t-s);
 
-
-        float AP = 0; //angle for platform
-        float AB = AnglePlat; //angle for barrel (horizontal)
+        float AP_rotate = 0; //angle for platform
+        float AngleBarrH = AnglePlat; //angle for barrel (horizontal)
+        //границы
         if (AnglePlat < gr_left)
         {
-            AP = AnglePlat - gr_left;
-            AB = gr_left;
+            AP_rotate = AnglePlat - gr_left;
+            AngleBarrH = gr_left;
         }
         else if (AnglePlat > gr_right)
         {
-            AP = AnglePlat - gr_right;
-            AB = gr_right;
+            AP_rotate = AnglePlat - gr_right;
+            AngleBarrH = gr_right;
         }
 
-    
+        //2. вверх-вниз
+        float AngleBarrV = 90 - Mathf.Abs( Vector3.SignedAngle(V, Platform.tr.forward, Vector3.up)); //angle for barrel (vertical)
+        
+        //границы
+        if (AngleBarrV < gr_up)
+        {
+            AngleBarrV = gr_up;
+        }
+        else if (AngleBarrV > gr_down)
+        {
+            AngleBarrV = gr_down;
+        }
 
-        //применяем к платформе
-        if (AP != 0)
-            Platform.RotatePlatform(AP);
-        //применяем к стволу
-        tr.localEulerAngles = new Vector3(tr.localEulerAngles.x, AB, 0);
+        //3. применяем к платформе
+        if (AP_rotate != 0)
+            Platform.RotatePlatform(AP_rotate);
+        //4. применяем к стволу
+        tr.localEulerAngles = new Vector3(AngleBarrV, AngleBarrH, 0);
     }
 
     void Shoot()
